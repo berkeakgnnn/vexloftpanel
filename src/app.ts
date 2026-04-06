@@ -13,6 +13,7 @@ import categoryRoutes from "./routes/categories.js";
 import menuItemRoutes from "./routes/menu-items.js";
 import uploadRoutes from "./routes/upload.js";
 import publicRoutes from "./routes/public.js";
+import seedTemplateRoutes from "./routes/seed-template.js";
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -38,6 +39,7 @@ export function buildApp() {
   app.register(menuItemRoutes);
   app.register(uploadRoutes);
   app.register(publicRoutes);
+  app.register(seedTemplateRoutes);
 
   // Health check
   app.get("/health", async () => ({ status: "ok", timestamp: new Date().toISOString() }));
