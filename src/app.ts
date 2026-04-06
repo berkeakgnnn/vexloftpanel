@@ -18,7 +18,7 @@ import seedTemplateRoutes from "./routes/seed-template.js";
 export function buildApp() {
   const app = Fastify({ logger: true });
 
-  app.register(cors, { origin: true, credentials: true });
+  app.register(cors, { origin: true, credentials: true, methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"] });
   app.register(multipart, {
     limits: { fileSize: parseInt(process.env.UPLOAD_MAX_SIZE || "5242880") },
   });
