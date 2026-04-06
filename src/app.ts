@@ -17,7 +17,7 @@ import publicRoutes from "./routes/public.js";
 export function buildApp() {
   const app = Fastify({ logger: true });
 
-  app.register(cors, { origin: process.env.CORS_ORIGIN || "*" });
+  app.register(cors, { origin: true, credentials: true });
   app.register(multipart, {
     limits: { fileSize: parseInt(process.env.UPLOAD_MAX_SIZE || "5242880") },
   });
