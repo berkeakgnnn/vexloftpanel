@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  OWNER
+}
+
+enum Template {
+  CAFE
+  RESTAURANT
+  PUB
+  CUSTOM
+}
+
+enum LayoutType {
+  FULLCARD
+  LIST
+  GRID
+  HYBRID
+}
+
+enum CategoryLayout {
+  DEFAULT
+  CHALKBOARD
+  GRID
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(OWNER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businesses Business[]
+}
+
+model Business {
+  id        String   @id @default(uuid())
+  ownerId   String
+  name      String
+  slug      String   @unique
+  template  Template @default(CUSTOM)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner      User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  theme      BusinessTheme?
+  info       BusinessInfo?
+  categories Category[]
+  menuItems  MenuItem[]
+}
+
+model BusinessTheme {
+  id             String     @id @default(uuid())
+  businessId     String     @unique
+  primaryColor   String     @default("#3e2723")
+  accentColor    String     @default("#8d6346")
+  bgColor        String     @default("#faf6f0")
+  cardBgColor    String     @default("#ffffff")
+  textColor      String     @default("#2c1810")
+  mutedTextColor String     @default("#8d7b6a")
+  borderColor    String     @default("#e8dcc8")
+  fontHeading    String     @default("Playfair Display")
+  fontBody       String     @default("Inter")
+  layoutType     LayoutType @default(FULLCARD)
+  heroImage      String?
+  logo           String?
+  customCSS      String?
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model BusinessInfo {
+  id         String  @id @default(uuid())
+  businessId String  @unique
+  tagline    String?
+  established String?
+  locationTr String  @default("")
+  locationEn String  @default("")
+  hoursTr    String  @default("")
+  hoursEn    String  @default("")
+  phone      String?
+  website    String?
+  instagram  String?
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id         String         @id @default(uuid())
+  businessId String
+  nameTr     String
+  nameEn     String
+  slug       String
+  banner     String?
+  sortOrder  Int            @default(0)
+  layout     CategoryLayout @default(DEFAULT)
+  isActive   Boolean        @default(true)
+
+  business Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  items    MenuItem[]
+
+  @@unique([businessId, slug])
+}
+
+model MenuItem {
+  id            String  @id @default(uuid())
+  categoryId    String
+  businessId    String
+  nameTr        String
+  nameEn        String
+  descriptionTr String  @default("")
+  descriptionEn String  @default("")
+  price         Decimal
+  image         String?
+  sortOrder     Int     @default(0)
+  isActive      Boolean @default(true)
+  badges        Json?
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
