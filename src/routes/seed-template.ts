@@ -151,7 +151,7 @@ export default async function seedTemplateRoutes(app: FastifyInstance): Promise<
     { preHandler: [authenticate, authorize("ADMIN")] },
     async (request, reply) => {
       const { slug } = request.params as { slug: string };
-      const { layoutType } = request.body as { layoutType: string };
+      const { layoutType, businessType } = request.body as { layoutType: string; businessType?: string };
 
       const business = await prisma.business.findUnique({ where: { slug } });
       if (!business) return reply.status(404).send({ error: "Business not found" });
@@ -160,22 +160,28 @@ export default async function seedTemplateRoutes(app: FastifyInstance): Promise<
       await prisma.menuItem.deleteMany({ where: { businessId: business.id } });
       await prisma.category.deleteMany({ where: { businessId: business.id } });
 
-      // Select and optionally remap template based on layoutType
+      // Select template data based on businessType first, then apply layout
       let templateCategories: TemplateCategory[];
+
+      // Pick data source by business type
+      const baseData = businessType === "RESTAURANT" ? RESTAURANT_CATEGORIES
+        : businessType === "PUB" ? PUB_CATEGORIES
+        : CAFE_CATEGORIES; // CAFE or default
+
+      // Apply layout override
       switch (layoutType) {
         case "FULLCARD":
-          templateCategories = CAFE_CATEGORIES;
+          templateCategories = baseData.map((c) => ({ ...c, layout: "DEFAULT" as const }));
           break;
         case "LIST":
-          // Restaurant data with all categories forced to CHALKBOARD layout
-          templateCategories = RESTAURANT_CATEGORIES.map((c) => ({ ...c, layout: "CHALKBOARD" as const }));
+          templateCategories = baseData.map((c) => ({ ...c, layout: "CHALKBOARD" as const }));
           break;
         case "GRID":
-          // Cafe data with all categories forced to GRID layout
-          templateCategories = CAFE_CATEGORIES.map((c) => ({ ...c, layout: "GRID" as const }));
+          templateCategories = baseData.map((c) => ({ ...c, layout: "GRID" as const }));
           break;
         case "HYBRID":
-          templateCategories = PUB_CATEGORIES;
+          // Keep original layouts from template (pub has CHALKBOARD for drinks, GRID for food)
+          templateCategories = baseData;
           break;
         default:
           templateCategories = CAFE_CATEGORIES;
